@@ -1,0 +1,398 @@
+openapi: 3.0.3
+info:
+  title: Library Management System - Borrowers Module
+  description: Borrower (library member) management endpoints for the Library Management System
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+tags:
+  - name: Borrowers
+    description: Borrower (library member) management operations
+
+paths:
+  /borrowers:
+    get:
+      tags:
+        - Borrowers
+      summary: Get all borrowers
+      description: Retrieve a paginated list of all registered borrowers
+      operationId: findAllBorrowers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (default 1)
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default 10)
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: List of borrowers retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBorrowersResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Borrowers
+      summary: Register a new borrower
+      description: Add a new borrower (library member) to the system
+      operationId: createBorrower
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBorrowerDto'
+            example:
+              name: "John Doe"
+              email: "john.doe@example.com"
+              phoneNumber: "+1-555-123-4567"
+              address: "123 Main Street, City, State 12345"
+      responses:
+        '201':
+          description: Borrower created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowerResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Borrower with this email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /borrowers/{id}:
+    get:
+      tags:
+        - Borrowers
+      summary: Get a borrower by ID
+      description: Retrieve a single borrower by their unique identifier
+      operationId: findOneBorrower
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Borrower's unique identifier (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Borrower retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowerResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Borrower not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - Borrowers
+      summary: Update a borrower
+      description: Update an existing borrower's information
+      operationId: updateBorrower
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Borrower's unique identifier (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBorrowerDto'
+            example:
+              phoneNumber: "+1-555-987-6543"
+              address: "456 Oak Avenue, New City, State 67890"
+      responses:
+        '200':
+          description: Borrower updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowerResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Borrower not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Borrowers
+      summary: Delete a borrower
+      description: Remove a borrower from the system
+      operationId: removeBorrower
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Borrower's unique identifier (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Borrower deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Borrower not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  schemas:
+    CreateBorrowerDto:
+      type: object
+      required:
+        - name
+        - email
+        - phoneNumber
+        - address
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Borrower's full name
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: Borrower's email address (must be unique)
+          example: "john.doe@example.com"
+        phoneNumber:
+          type: string
+          maxLength: 20
+          pattern: "^[0-9+\\-\\s]+$"
+          description: Phone number (can contain digits, +, -, and spaces)
+          example: "+1-555-123-4567"
+        address:
+          type: string
+          description: Borrower's address
+          example: "123 Main Street, City, State 12345"
+
+    UpdateBorrowerDto:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Borrower's full name
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: Borrower's email address
+          example: "john.doe@example.com"
+        phoneNumber:
+          type: string
+          maxLength: 20
+          pattern: "^[0-9+\\-\\s]+$"
+          description: Phone number
+          example: "+1-555-987-6543"
+        address:
+          type: string
+          description: Borrower's address
+          example: "456 Oak Avenue, New City, State 67890"
+
+    Borrower:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Borrower's unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Borrower's full name
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: Borrower's email address
+          example: "john.doe@example.com"
+        phoneNumber:
+          type: string
+          description: Borrower's phone number
+          example: "+1-555-123-4567"
+        address:
+          type: string
+          description: Borrower's address
+          example: "123 Main Street, City, State 12345"
+        registeredAt:
+          type: string
+          format: date-time
+          description: Registration timestamp
+          example: "2026-01-15T10:30:00.000Z"
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2026-01-15T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2026-01-15T10:30:00.000Z"
+
+    BorrowerResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Borrower'
+
+    PaginatedBorrowersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Borrower'
+            meta:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  description: Total number of items
+                  example: 50
+                page:
+                  type: integer
+                  description: Current page number
+                  example: 1
+                limit:
+                  type: integer
+                  description: Items per page
+                  example: 10
+                totalPages:
+                  type: integer
+                  description: Total number of pages
+                  example: 5
+
+    MessageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Borrower deleted successfully"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Borrower not found"
+            statusCode:
+              type: integer
+              example: 404

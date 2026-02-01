@@ -1,0 +1,456 @@
+openapi: 3.0.3
+info:
+  title: Library Management System - Borrowings Module
+  description: Book borrowing and return management endpoints for the Library Management System
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+tags:
+  - name: Borrowings
+    description: Book borrowing and return operations
+
+paths:
+  /borrowings:
+    get:
+      tags:
+        - Borrowings
+      summary: Get all borrowings
+      description: Retrieve a paginated list of all borrowing records
+      operationId: findAllBorrowings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (default 1)
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default 10)
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: List of borrowings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBorrowingsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Borrowings
+      summary: Checkout a book
+      description: Create a new borrowing record (checkout a book for a borrower)
+      operationId: checkout
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutDto'
+            example:
+              borrowerId: "550e8400-e29b-41d4-a716-446655440001"
+              bookId: "550e8400-e29b-41d4-a716-446655440002"
+              dueDate: "2026-02-15"
+      responses:
+        '201':
+          description: Book checked out successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowingResponse'
+        '400':
+          description: Validation error or book not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Borrower or book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /borrowings/overdue:
+    get:
+      tags:
+        - Borrowings
+      summary: Get overdue borrowings
+      description: Retrieve a paginated list of all overdue borrowing records
+      operationId: findOverdueBorrowings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (default 1)
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default 10)
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: List of overdue borrowings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBorrowingsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /borrowings/borrower/{borrowerId}:
+    get:
+      tags:
+        - Borrowings
+      summary: Get borrowings by borrower
+      description: Retrieve all borrowing records for a specific borrower
+      operationId: findByBorrower
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: borrowerId
+          in: path
+          description: Borrower's unique identifier (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number (default 1)
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default 10)
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: List of borrowings for the borrower retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBorrowingsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Borrower not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /borrowings/borrower/{borrowerId}/active:
+    get:
+      tags:
+        - Borrowings
+      summary: Get active borrowings by borrower
+      description: Retrieve all active (not returned) borrowing records for a specific borrower
+      operationId: findActiveBorrowings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: borrowerId
+          in: path
+          description: Borrower's unique identifier (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of active borrowings for the borrower retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowingsListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Borrower not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /borrowings/{id}/return:
+    patch:
+      tags:
+        - Borrowings
+      summary: Return a book
+      description: Mark a borrowing as returned
+      operationId: returnBook
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Borrowing record's unique identifier (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Book returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowingResponse'
+        '400':
+          description: Book already returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Borrowing record not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  schemas:
+    CheckoutDto:
+      type: object
+      required:
+        - borrowerId
+        - bookId
+        - dueDate
+      properties:
+        borrowerId:
+          type: string
+          format: uuid
+          description: ID of the borrower checking out the book
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        bookId:
+          type: string
+          format: uuid
+          description: ID of the book being checked out
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        dueDate:
+          type: string
+          format: date
+          description: Due date for returning the book (YYYY-MM-DD format)
+          example: "2026-02-15"
+
+    Borrowing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Borrowing record's unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        borrowerId:
+          type: string
+          format: uuid
+          description: ID of the borrower
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        bookId:
+          type: string
+          format: uuid
+          description: ID of the book
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        borrowedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the book was borrowed
+          example: "2026-01-15T10:30:00.000Z"
+        dueDate:
+          type: string
+          format: date-time
+          description: Due date for returning the book
+          example: "2026-02-15T23:59:59.000Z"
+        returnedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the book was returned (null if not returned)
+          example: null
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2026-01-15T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2026-01-15T10:30:00.000Z"
+        borrower:
+          $ref: '#/components/schemas/BorrowerSummary'
+        book:
+          $ref: '#/components/schemas/BookSummary'
+
+    BorrowerSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+
+    BookSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        title:
+          type: string
+          example: "The Great Gatsby"
+        author:
+          type: string
+          example: "F. Scott Fitzgerald"
+        isbn:
+          type: string
+          example: "9780743273565"
+
+    BorrowingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Borrowing'
+
+    BorrowingsListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Borrowing'
+
+    PaginatedBorrowingsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Borrowing'
+            meta:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  description: Total number of items
+                  example: 100
+                page:
+                  type: integer
+                  description: Current page number
+                  example: 1
+                limit:
+                  type: integer
+                  description: Items per page
+                  example: 10
+                totalPages:
+                  type: integer
+                  description: Total number of pages
+                  example: 10
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Borrowing not found"
+            statusCode:
+              type: integer
+              example: 404

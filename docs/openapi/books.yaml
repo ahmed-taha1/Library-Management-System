@@ -1,0 +1,498 @@
+openapi: 3.0.3
+info:
+  title: Library Management System - Books Module
+  description: Book management endpoints for the Library Management System
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+tags:
+  - name: Books
+    description: Book management operations
+
+paths:
+  /books:
+    get:
+      tags:
+        - Books
+      summary: Get all books
+      description: Retrieve a paginated list of all books in the library
+      operationId: findAllBooks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (default 1)
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default 10)
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: List of books retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBooksResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Books
+      summary: Create a new book
+      description: Add a new book to the library (rate limited to 5 per minute)
+      operationId: createBook
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookDto'
+            example:
+              title: "The Great Gatsby"
+              author: "F. Scott Fitzgerald"
+              isbn: "9780743273565"
+              description: "A novel about the American Dream"
+              quantity: 5
+              shelf: "A1"
+              section: "Fiction"
+      responses:
+        '201':
+          description: Book created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Book with this ISBN already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests (rate limit exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /books/search:
+    get:
+      tags:
+        - Books
+      summary: Search books
+      description: Search books by title, author, or ISBN (rate limited to 10 per minute)
+      operationId: searchBooks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Search query (searches title, author, and ISBN)
+          required: true
+          schema:
+            type: string
+          example: "Gatsby"
+        - name: page
+          in: query
+          description: Page number (default 1)
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Number of items per page (default 10)
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBooksResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests (rate limit exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /books/{id}:
+    get:
+      tags:
+        - Books
+      summary: Get a book by ID
+      description: Retrieve a single book by its unique identifier
+      operationId: findOneBook
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Book's unique identifier (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Book retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - Books
+      summary: Update a book
+      description: Update an existing book's information
+      operationId: updateBook
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Book's unique identifier (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookDto'
+            example:
+              quantity: 10
+              shelf: "B2"
+      responses:
+        '200':
+          description: Book updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Books
+      summary: Delete a book
+      description: Remove a book from the library
+      operationId: removeBook
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Book's unique identifier (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Book deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  schemas:
+    CreateBookDto:
+      type: object
+      required:
+        - title
+        - author
+        - isbn
+        - shelf
+        - section
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          description: Book title
+          example: "The Great Gatsby"
+        author:
+          type: string
+          maxLength: 255
+          description: Book author
+          example: "F. Scott Fitzgerald"
+        isbn:
+          type: string
+          pattern: "^[0-9]{10,13}$"
+          description: ISBN (10 or 13 digits, hyphens will be removed)
+          example: "9780743273565"
+        description:
+          type: string
+          description: Book description (optional)
+          example: "A novel about the American Dream"
+        quantity:
+          type: integer
+          minimum: 0
+          default: 1
+          description: Number of copies available
+          example: 5
+        shelf:
+          type: string
+          maxLength: 50
+          description: Shelf location
+          example: "A1"
+        section:
+          type: string
+          maxLength: 50
+          description: Library section
+          example: "Fiction"
+
+    UpdateBookDto:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          description: Book title
+          example: "The Great Gatsby"
+        author:
+          type: string
+          maxLength: 255
+          description: Book author
+          example: "F. Scott Fitzgerald"
+        isbn:
+          type: string
+          pattern: "^[0-9]{10,13}$"
+          description: ISBN (10 or 13 digits)
+          example: "9780743273565"
+        description:
+          type: string
+          description: Book description
+          example: "A novel about the American Dream"
+        quantity:
+          type: integer
+          minimum: 0
+          description: Number of copies available
+          example: 10
+        shelf:
+          type: string
+          maxLength: 50
+          description: Shelf location
+          example: "B2"
+        section:
+          type: string
+          maxLength: 50
+          description: Library section
+          example: "Fiction"
+
+    Book:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Book's unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        title:
+          type: string
+          description: Book title
+          example: "The Great Gatsby"
+        author:
+          type: string
+          description: Book author
+          example: "F. Scott Fitzgerald"
+        isbn:
+          type: string
+          description: Book ISBN
+          example: "9780743273565"
+        description:
+          type: string
+          nullable: true
+          description: Book description
+          example: "A novel about the American Dream"
+        quantity:
+          type: integer
+          description: Total number of copies
+          example: 5
+        shelf:
+          type: string
+          description: Shelf location
+          example: "A1"
+        section:
+          type: string
+          description: Library section
+          example: "Fiction"
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2026-01-15T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2026-01-15T10:30:00.000Z"
+
+    BookResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/Book'
+
+    PaginatedBooksResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Book'
+            meta:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  description: Total number of items
+                  example: 100
+                page:
+                  type: integer
+                  description: Current page number
+                  example: 1
+                limit:
+                  type: integer
+                  description: Items per page
+                  example: 10
+                totalPages:
+                  type: integer
+                  description: Total number of pages
+                  example: 10
+
+    MessageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Book deleted successfully"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Book not found"
+            statusCode:
+              type: integer
+              example: 404

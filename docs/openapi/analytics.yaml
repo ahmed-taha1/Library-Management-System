@@ -1,0 +1,227 @@
+openapi: 3.0.3
+info:
+  title: Library Management System - Analytics Module
+  description: Analytics and reporting endpoints for the Library Management System
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+tags:
+  - name: Analytics
+    description: Analytics and CSV export operations
+
+paths:
+  /analytics/export/summary:
+    get:
+      tags:
+        - Analytics
+      summary: Export analytics summary
+      description: Export a CSV summary of borrowing analytics for a date range
+      operationId: exportSummary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          description: Start date for the report (YYYY-MM-DD). Defaults to 1 month ago.
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2026-01-01"
+        - name: endDate
+          in: query
+          description: End date for the report (YYYY-MM-DD). Defaults to today.
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2026-01-31"
+      responses:
+        '200':
+          description: CSV file with analytics summary
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+              example: |
+                Metric,Value
+                Period Start,2026-01-01
+                Period End,2026-01-31
+                Total Borrowings,150
+                Active Borrowings,45
+                Overdue Borrowings,5
+                Returned Borrowings,105
+          headers:
+            Content-Disposition:
+              description: Attachment filename
+              schema:
+                type: string
+                example: 'attachment; filename="analytics_summary_2026-01-01_to_2026-01-31.csv"'
+        '400':
+          description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /analytics/export/borrowings:
+    get:
+      tags:
+        - Analytics
+      summary: Export borrowings data
+      description: Export all borrowing records for a date range as CSV
+      operationId: exportBorrowings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          description: Start date for the report (YYYY-MM-DD). Defaults to 1 month ago.
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2026-01-01"
+        - name: endDate
+          in: query
+          description: End date for the report (YYYY-MM-DD). Defaults to today.
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2026-01-31"
+      responses:
+        '200':
+          description: CSV file with borrowing records
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+              example: |
+                ID,Borrower Name,Borrower Email,Book Title,Book Author,ISBN,Borrowed At,Due Date,Returned At,Status
+                uuid-1,John Doe,john@example.com,The Great Gatsby,F. Scott Fitzgerald,9780743273565,2026-01-15,2026-02-15,,Active
+                uuid-2,Jane Smith,jane@example.com,1984,George Orwell,9780451524935,2026-01-10,2026-02-10,2026-01-25,Returned
+          headers:
+            Content-Disposition:
+              description: Attachment filename
+              schema:
+                type: string
+                example: 'attachment; filename="borrowings_2026-01-01_to_2026-01-31.csv"'
+        '400':
+          description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /analytics/export/overdue:
+    get:
+      tags:
+        - Analytics
+      summary: Export overdue borrowings
+      description: Export all overdue borrowing records for a date range as CSV
+      operationId: exportOverdue
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          description: Start date for the report (YYYY-MM-DD). Defaults to 1 month ago.
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2026-01-01"
+        - name: endDate
+          in: query
+          description: End date for the report (YYYY-MM-DD). Defaults to today.
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2026-01-31"
+      responses:
+        '200':
+          description: CSV file with overdue borrowing records
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+              example: |
+                ID,Borrower Name,Borrower Email,Borrower Phone,Book Title,Book Author,ISBN,Borrowed At,Due Date,Days Overdue
+                uuid-1,John Doe,john@example.com,+1-555-123-4567,The Great Gatsby,F. Scott Fitzgerald,9780743273565,2026-01-01,2026-01-15,16
+          headers:
+            Content-Disposition:
+              description: Attachment filename
+              schema:
+                type: string
+                example: 'attachment; filename="overdue_borrowings_2026-01-01_to_2026-01-31.csv"'
+        '400':
+          description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  schemas:
+    DateRangeDto:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+          description: Start date for the analytics period (defaults to 1 month ago)
+          example: "2026-01-01"
+        endDate:
+          type: string
+          format: date
+          description: End date for the analytics period (defaults to today)
+          example: "2026-01-31"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "startDate must be a valid date (YYYY-MM-DD)"
+            statusCode:
+              type: integer
+              example: 400
