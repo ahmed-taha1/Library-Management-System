@@ -26,7 +26,7 @@ See [docs/erd.md](docs/erd.md) for the full ERD diagram.
 
 1. Clone the repo and navigate to it:
 ```bash
-git clone <repo-url>
+git clone https://github.com/ahmed-taha1/Library-Management-System.git
 cd library-management-system
 ```
 
