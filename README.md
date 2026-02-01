@@ -1,98 +1,143 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Library Management System
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A REST API for managing books and borrowers in a library. Built with NestJS, PostgreSQL, and Prisma.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## What's Implemented
 
-## Description
+**Core Features:**
+- Books management (CRUD, search by title/author/ISBN)
+- Borrowers management (register, update, delete, list)
+- Borrowing system (checkout, return, track due dates, overdue books)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+**Bonus Features:**
+- Analytics with CSV export (borrowing reports, overdue reports)
+- Rate limiting on book creation and search endpoints
+- Docker setup with docker-compose
+- JWT authentication with refresh tokens
+- Unit tests for books module
 
-## Project setup
+## Database Schema
 
+See [docs/erd.md](docs/erd.md) for the full ERD diagram.
+
+## Setup (First Time)
+
+**Prerequisites:** Docker and Docker Compose installed.
+
+1. Clone the repo and navigate to it:
 ```bash
-$ npm install
+git clone <repo-url>
+cd library-management-system
 ```
 
-## Compile and run the project
-
+2. Create your `.env` file:
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cp .env.example .env
 ```
 
-## Run tests
-
+3. Start everything with Docker:
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker-compose up --build -d
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+4. Run database migrations:
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+docker exec library_api npx prisma migrate deploy
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+5. (Optional) Seed the database with sample data:
+```bash
+docker exec library_api npx prisma db seed
+```
 
-## Resources
+The API will be available at `http://localhost:4001/api`
 
-Check out a few resources that may come in handy when working with NestJS:
+## Running After Setup
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+# Start
+docker-compose up -d
 
-## Support
+# Stop
+docker-compose down
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# View logs
+docker-compose logs -f app
+```
 
-## Stay in touch
+## API Endpoints
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+All endpoints (except auth) require a JWT token in the Authorization header.
 
-## License
+### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /api/auth/register | Register new user |
+| POST | /api/auth/login | Login, get tokens |
+| POST | /api/auth/refresh | Refresh access token |
+| GET | /api/auth/me | Get current user |
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Books
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/books | List all books (paginated) |
+| GET | /api/books/search?q= | Search books |
+| GET | /api/books/:id | Get single book |
+| POST | /api/books | Add new book |
+| PATCH | /api/books/:id | Update book |
+| DELETE | /api/books/:id | Delete book |
+
+### Users (Borrowers)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/users | List all users |
+| GET | /api/users/:id | Get single user |
+| PATCH | /api/users/:id | Update user |
+| DELETE | /api/users/:id | Delete user |
+
+### Borrowing
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /api/borrowing/checkout | Borrow a book |
+| POST | /api/borrowing/return/:id | Return a book |
+| GET | /api/borrowing/my-books | Current user's borrowed books |
+| GET | /api/borrowing/overdue | List overdue books |
+| GET | /api/borrowing | All borrowing records |
+
+### Analytics
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/analytics/summary | Borrowing stats summary |
+| GET | /api/analytics/export/summary | Export summary as CSV |
+| GET | /api/analytics/export/overdue | Export overdue books as CSV |
+| GET | /api/analytics/export/borrowings | Export all borrowings as CSV |
+
+Query params for analytics: `startDate` and `endDate` (YYYY-MM-DD format, defaults to last month)
+
+## Running Tests
+
+```bash
+npm test
+```
+
+## Tech Stack
+
+- Node.js + NestJS
+- PostgreSQL
+- Prisma ORM
+- JWT for authentication
+- Docker
+
+## Project Structure
+
+```
+src/
+├── config/          # App configuration
+├── prisma/          # Database client module
+└── features/
+    ├── auth/        # Authentication (JWT, refresh tokens)
+    ├── users/       # User/borrower management
+    ├── books/       # Book management
+    ├── borrowing/   # Checkout/return logic
+    └── analytics/   # Reports and CSV exports
+```
